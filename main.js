@@ -1,8 +1,9 @@
-let contacts = []
-
+let currentContact = {};
+let contacts = [];
+loadContacts();
 /**
  * Called when submitting the new Contact Form
- * This method will pull data from the form
+ * This method will pull data from the form 
  * use the provided function to give the data an id
  * then add that data to the contacts list.
  * Then reset the form
@@ -10,6 +11,34 @@ let contacts = []
  * *** push: resources/push.jpg
  */
 function addContact(event) {
+  event.preventDefault()
+  let form = event.target
+
+  /* Converting my first attempt into one object, "contact".
+  let contactName = form.contactName.value
+  let contactPhone = form.contactPhone.value
+  let emergencyContact = form.emergencyContact.value
+
+  currentContact = contacts.find(contact => contact.name == contactName)
+  
+  if (!currentContact){
+    currentContact = {name: contactName, phone: contactPhone, emergency: emergencyContact}
+    contacts.push(currentContact)
+    saveContacts()
+  } */
+
+  let contact = {
+    id: generateId(),
+    contactName: form.contactName.value,
+    contactPhone: form.contactPhone.value,
+    emergencyContact: form.emergencyContact.checked
+  };
+
+  contacts.push(contact);
+  saveContacts();
+
+  form.reset();
+
 }
 
 /**
@@ -17,6 +46,8 @@ function addContact(event) {
  * Saves the string to localstorage at the key contacts 
  */
 function saveContacts() {
+  window.localStorage.setItem('contacts', JSON.stringify(contacts))
+  drawContacts();
 }
 
 /**
@@ -25,7 +56,11 @@ function saveContacts() {
  * the contacts array to the retrieved array
  */
 function loadContacts() {
-}
+  let contactInfo = JSON.parse(window.localStorage.getItem('contacts'));
+  if(contactInfo){
+    contacts = contactInfo
+  }
+};
 
 /**
  * This function targets the contacts-list on the 
@@ -33,7 +68,27 @@ function loadContacts() {
  * contacts in the contacts array
  */
 function drawContacts() {
+  let contactListElem = document.getElementById('contact-list')
+  let template = "";
+
+  contacts.forEach(contact => {
+    template += `
+    <div class="contact-card card mt-1 mb-1 ${contact.emergencyContact ? 'emergency-contact' : ''}">
+        <h3 class="mt-1 mb-1">${contact.contactName}</h3>
+        <div class="d-flex space-between">
+          <p>
+            <i class="fa fa-fw fa-phone"></i>
+            <span>${contact.contactPhone}</span>
+          </p>
+          <i class="action fa fa-trash text-danger" onClick="removeContact('${contact.id}')"remove></i>
+        </div>
+      </div>`
+  }
+  )
+  contactListElem.innerHTML = template;
 }
+
+
 
 /**
  * This function is called with a contact id
@@ -45,12 +100,19 @@ function drawContacts() {
  * @param {string} contactId 
  */
 function removeContact(contactId) {
+  let index = contacts.findIndex(contact => contact.id == contactId)
+  if (index == -1) {
+    throw new Error('Invalid Contact Id')
+  }
+  contacts.splice(index, 1)
+  saveContacts();
 }
 
 /**
  * Toggles the visibility of the AddContact Form
  */
 function toggleAddContactForm() {
+  document.getElementById("new-contact-form").classList.toggle('hidden');
 }
 
 
